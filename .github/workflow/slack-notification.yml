@@ -1,0 +1,30 @@
+name: CI Pipeline with GCP Alerts
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Build
+        run: |
+          echo "Building project..."
+          # simulate failure for demo
+          exit 1
+      - name: slack-notify
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+         channel-id: ${{ secrets.SLACK_CHANNEL_ID}}
+         payload:
+          {
+            "text": "${{job.status == 'sucess' && ':white_check_mark: *job passed!*'// ':x: *job failed*'' }}" 
+          }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN}}
+        if: always()
