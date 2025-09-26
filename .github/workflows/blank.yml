@@ -1,0 +1,33 @@
+name: Failure Demo Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build step
+        run: echo "✅ Build completed successfully"
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Tests
+        run: |
+          echo "🚀 Running tests..."
+          echo "❌ Simulating failure"
+          exit 1   # <-- this causes the failure
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to staging
+        run: echo "This will not run because test failed"
