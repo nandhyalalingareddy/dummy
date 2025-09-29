@@ -19,32 +19,6 @@ jobs:
           echo "Building project..."
           # simulate failure for demo
           exit 1
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: success() # only runs if build succeeds
-    steps:
-      - name: Deploy
-        run: echo "Deploying to staging..."
-
-  gcp-alert:
-    needs: [build, deploy]
-    if: failure() # trigger only when previous jobs fail
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-
-      - name: Publish failure alert to GCP Pub/Sub
-        run: |
-          MESSAGE="GitHub Workflow failed in repo: $GITHUB_REPOSITORY, run: $GITHUB_RUN_ID"
-          echo "$MESSAGE" > message.json
-          gcloud pubsub topics publish github-alerts --message="$MESSAGE"
           
       - name: Send Slack notification
         if: always() # ensures this runs even if previous steps fail
