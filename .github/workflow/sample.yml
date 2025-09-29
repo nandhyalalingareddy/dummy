@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+    Slack_webhook_url: ${{secrets.Slack_webhook_url}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,4 +45,12 @@ jobs:
           MESSAGE="GitHub Workflow failed in repo: $GITHUB_REPOSITORY, run: $GITHUB_RUN_ID"
           echo "$MESSAGE" > message.json
           gcloud pubsub topics publish github-alerts --message="$MESSAGE"
-
+          
+      - name: Send Slack notification
+        if: always() # ensures this runs even if previous steps fail
+        uses: actions/slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
