@@ -1,29 +1,133 @@
-name: CI Pipeline with GCP Alerts
+name: Slack Alert for Workflow Status
+
+ 
 
 on:
+
   push:
-    branches: [ "main" ]
-  pull_request:
+
+    branches:
+
+      - Github-WF-test
+
+ 
 
 jobs:
-  build:
+
+  run-workflow:
+
+    name: Run Workflow and Send Slack Alert
+
     runs-on: ubuntu-latest
-    env:
-    SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
+
+ 
+
     steps:
-      - name: Checkout
+
+      # Step 1: Checkout the repository
+
+      - name: Checkout Code
+
         uses: actions/checkout@v4
 
-      - name: Run Build
+ 
+
+      # Step 2: Run a sample command (replace with your actual workflow steps)
+
+      - name: Run Build or Tests
+
         run: |
-          echo "Building project..."
-          # simulate failure for demo
+
+          echo "Running build..."
+
+          # Simulate a failure for testing (remove this line in production)
+
           exit 1
-          
-      - name: Send Slack notification
-        if: always() # ensures this runs even if previous steps fail
-        uses: actions/slack@v1
+
+ 
+
+      # Step 3: Send Slack Alert on Success
+
+      - name: Send Slack Alert on Success
+
+        if: ${{ success() }}
+
+        uses: slackapi/slack-github-action@v2.1.1
+
         with:
-          status: ${{ job.status }}
-          steps: ${{toJson(steps) }}
-          channel: 'oct2022'
+
+          method: chat.postMessage
+
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+
+          payload: |
+
+            {
+
+              "channel": "#alerts",
+
+              "text": ":white_check_mark: Workflow succeeded in repository *${{ github.repository }}* on branch *${{ github.ref_name }}*!",
+
+              "attachments": [
+
+                {
+
+                  "color": "36a64f",
+
+                  "fields": [
+
+                    { "title": "Triggered by", "value": "${{ github.actor }}", "short": true },
+
+                    { "title": "Workflow Run", "value": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>", "short": true }
+
+                  ]
+
+                }
+
+              ]
+
+            }
+
+ 
+
+      # Step 4: Send Slack Alert on Failure
+
+      - name: Send Slack Alert on Failure
+
+        if: ${{ failure() }}
+
+        uses: slackapi/slack-github-action@v2.1.1
+
+        with:
+
+          method: chat.postMessage
+
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+
+          payload: |
+
+            {
+
+              "channel": "#alerts",
+
+              "text": ":x: Workflow failed in repository *${{ github.repository }}* on branch *${{ github.ref_name }}*!",
+
+              "attachments": [
+
+                {
+
+                  "color": "ff0000",
+
+                  "fields": [
+
+                    { "title": "Triggered by", "value": "${{ github.actor }}", "short": true },
+
+                    { "title": "Workflow Run", "value": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>", "short": true }
+
+                  ]
+
+                }
+
+              ]
+
+            }
